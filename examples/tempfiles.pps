@@ -1,0 +1,33 @@
+#! /opt/puppetlabs/bin/puppet script
+
+['one', 'two', 'three'].each do |name|
+  resource(:user, name,
+    :ensure => 'present',
+  )
+  resource(:file, "/tmp/#{name}",
+    :ensure  => 'file',
+    :owner   => name,
+    :content => facts['osfamily'],
+  )
+end
+
+resource(:file, '/tmp/dupe',
+  :ensure  => 'file',
+  :content => 'hello there',
+)
+
+resource(:file, '/tmp/dupe',
+  :ensure => 'file',
+  :mode   => '0600',
+)
+
+# This will cause a failure and abort the script unless run with -k
+resource(:file, '/this/path/does/not/exist',
+  :ensure  => 'file',
+  :content => 'oogabooga',
+)
+
+resource(:file, '/tmp/puppet_sourced_file',
+  :ensure => 'file',
+  :source => 'puppet:///modules/example/the.file',
+)

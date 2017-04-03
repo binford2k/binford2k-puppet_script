@@ -1,0 +1,67 @@
+#! /opt/puppetlabs/bin/puppet script
+require 'tmpdir'
+
+Dir.mktmpdir do |dir|
+  Dir.chdir dir
+
+  ['one', 'two', 'three'].each do |name|
+    resource(:file, "#{dir}/#{name}",
+      :ensure => 'file',
+      :source => "puppet:///myapplication/upgrades/#{name}.sql",
+    )
+  end
+
+  begin
+    resource(:service, 'myapplication',
+      :ensure  => 'stopped',
+    )
+
+    resource(:exec, 'backup',
+      :command => "/usr/bin/mysqldump -u #{username} -p#{password} myapplication_db > db_backup.sql",
+    )
+
+    ['one', 'two', 'three'].each do |name|
+      resource(:exec, 'apply update file',
+        :command => "/usr/bin/mysql -u #{username} -p#{password} < #{name}.sql",
+      )
+    end
+
+    resource(:package, 'myapplication',
+      :ensure  => 'latest',
+    )
+
+  rescue => e
+    puts 'Oh, bother!'
+    puts e.message
+
+    send_email('admin@example.com',
+      :subject  => "Application DB upgrade failed",
+      :body     => "Restoring from backup.\n\n#{e.message}",
+    )
+
+    resource(:exec, 'restore backup on fail',
+      :command => "mysql -u #{username} -p#{password} < db_backup.sql",
+    )
+
+    resource(:exec, 'app recover',
+      :command => '/usr/bin/myapplication recover',
+    )
+
+  ensure
+    resource(:service, 'myapplication',
+      :ensure  => 'running',
+    )
+  end
+
+  begin
+    resource(:exec, '/usr/bin/myapplication healthcheck' )
+
+  rescue => e
+    send_email('admin@example.com',
+      :subject  => "Application health check failed after upgrade!",
+      :body     => e.message,
+      :priority => :highest,
+    )
+  end
+
+end

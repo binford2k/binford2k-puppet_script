@@ -3,12 +3,18 @@
 
 Puppet's state model is amazing when you're managing configuration. But sometimes
 you really just need to make a thing happen. Maybe you need to halt an application,
-update its database, then restart it.
+update its database, then restart it. Maybe you need to take recovery actions when
+certain resources fail.
 
-This tool allows you to break out of the state model and just list resources states
-to manage in an imperative form. There's no dependency management, no duplicate
-resources, no immutable variables. Just write your script and let Puppet do its
-magic.
+To be clear: in almost every situation, you **should not use this tool**. This is
+only for complex processes which are difficult to be automated as a state model.
+
+-----------
+
+Puppet Script allows you to break out of the state model and just list resources
+states to manage in an imperative form. There's no dependency management, no
+duplicate resources to worry about, no immutable variables. Just write your
+script and let Puppet do its magic.
 
 This currently only works with native types, not defined types. And it won't work
 with any types that require including some class for setup or anything.
@@ -23,12 +29,8 @@ like this to manage resources. Facts are available in the `facts[]` hash.
 #! /opt/puppetlabs/bin/puppet script
 
 ['one', 'two', 'three'].each do |name|
-  resource(:user, name,
-    :ensure => 'present',
-  )
   resource(:file, "/tmp/#{name}",
     :ensure  => 'file',
-    :owner   => name,
     :content => facts['osfamily'],
   )
 end
@@ -42,16 +44,35 @@ resource(:file, '/tmp/dupe',
   :ensure => 'file',
   :mode   => '0600',
 )
+```
 
-resource(:file, '/this/path/does/not/exist',
+See the `examples` directory for more complex examples. For example, the
+`examples/upgrade.pps` script shows how a database-backed application could be
+upgraded, along with the database schema, with health checks and recovery if
+anything goes wrong.
+
+If you'd like to use defined resource types, or if you need to enforce some
+Puppet code for setup, then you can invoke the `apply()` method and directly
+enforce a mini-catalog of Puppet code. It's easiest to use a heredoc, as in
+this example:
+
+``` ruby
+#! /opt/puppetlabs/bin/puppet script
+
+resource(:file, '/tmp/hello',
   :ensure  => 'file',
-  :content => 'oogabooga',
+  :mode    => '0600',
+  :content => 'Hello there',
 )
 
-resource(:file, '/tmp/puppet_sourced_file',
-  :ensure => 'file',
-  :source => 'puppet:///modules/example/the.file',
-)
+apply <<-EOS
+include apache
+apache::vhost { $facts['fqdn']:
+  port    => '80',
+  docroot => '/var/www/vhost',
+}
+notify { 'hello from puppet code': }
+EOS
 ```
 
 

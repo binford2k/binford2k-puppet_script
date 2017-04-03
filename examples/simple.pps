@@ -1,0 +1,18 @@
+#! /opt/puppetlabs/bin/puppet script
+
+['one', 'two', 'three'].each do |name|
+  resource(:file, "/tmp/#{name}",
+    :ensure  => 'file',
+    :content => facts['osfamily'],
+  )
+end
+
+resource(:file, '/tmp/dupe',
+  :ensure  => 'file',
+  :content => 'hello there',
+)
+
+resource(:file, '/tmp/dupe',
+  :ensure => 'file',
+  :mode   => '0600',
+)
