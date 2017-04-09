@@ -1,6 +1,4 @@
-require 'puppet'
 require 'puppet/application'
-require 'open3'
 
 class Puppet::Application::Script < Puppet::Application
   option("--debug",      "-d")
