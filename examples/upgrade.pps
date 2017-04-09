@@ -1,6 +1,10 @@
 #! /opt/puppetlabs/bin/puppet script
 require 'tmpdir'
 
+# The tempfiles could likely also be done to a degree using the `archive` resource type.
+# I used `mktmpdir` to show intermingling stock Ruby code along with Puppet resources
+# where it makes sense to do so. In this case, a randomized tempdir is created for the
+# life of this block only, and then cleaned up deterministically.
 Dir.mktmpdir do |dir|
   Dir.chdir dir
 
@@ -30,6 +34,9 @@ Dir.mktmpdir do |dir|
       :ensure  => 'latest',
     )
 
+  # if the upgrade fails, let's attempt to clean up after it and send a notification.
+  # Notifications like this could be done with Splunk rules parsing Puppet reports,
+  # but the automated cleanup would be difficult/awkward to do.
   rescue => e
     puts 'Oh, bother!'
     puts e.message
@@ -47,17 +54,20 @@ Dir.mktmpdir do |dir|
       :command => '/usr/bin/myapplication recover',
     )
 
+  # no matter what happens, try to get the app up and running again
   ensure
     resource(:service, 'myapplication',
       :ensure  => 'running',
     )
   end
 
+  # in a separate block, run our health check to validate that it's operational
   begin
     resource(:exec, '/usr/bin/myapplication healthcheck' )
 
+  # but if the healthcheck fails, panic and page the on-call support immediately
   rescue => e
-    send_email('admin@example.com',
+    send_email('oncall@example.com',
       :subject  => "Application health check failed after upgrade!",
       :body     => e.message,
       :priority => :highest,
