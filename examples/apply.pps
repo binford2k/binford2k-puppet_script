@@ -12,11 +12,12 @@ resource(:file, '/tmp/dupe',
   :content => 'hello there',
 )
 
+apply <<-EOS
+notify { 'hello from puppet code': }
+#exec { 'a broken exec command': }
+EOS
+
 resource(:file, '/tmp/dupe',
   :ensure => 'file',
   :mode   => '0600',
 )
-
-apply <<-EOS
-notify { 'hello from puppet code': }
-EOS
