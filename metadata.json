@@ -1,0 +1,24 @@
+{
+  "operatingsystem_support": [
+    {
+      "operatingsystem": "CentOS",
+      "operatingsystemrelease": [ "5", "6", "7" ]
+    }
+  ],
+  "requirements": [
+    {
+      "name": "puppet",
+      "version_requirement": "4.x"
+    }
+  ],
+  "name": "binford2k-puppet_script",
+  "version": "0.0.1",
+  "author": "binford2k",
+  "summary": "Imperative Puppet Scripts",
+  "license": "Apache License, Version 2.0",
+  "source": "https:https://github.com/binford2k/binford2k-puppet_script",
+  "project_page": "https://github.com/binford2k/binford2k-puppet_script",
+  "issues_url": "https://github.com/binford2k/binford2k-puppet_script/issues",
+  "description": "Puppet Script allows you to break out of the state model and just list resources states to manage in an imperative form. There's no dependency management, no duplicate resources to worry about, no immutable variables. Just write your script and let Puppet do its magic.",
+  "dependencies": []
+}
