@@ -11,19 +11,6 @@ states to manage in an imperative form. There's no dependency management, no
 duplicate resources to worry about, no immutable variables. Just write your
 script and let Puppet do its magic.
 
------------
-
-To be clear: in almost every situation, you **should not use this tool**. This is
-only for complex processes which are difficult to represent as the final state of
-a state model or one-off ad hoc tasks. This should never be used for ongoing
-configuration management.
-
-If you're considering using this because you're struggling with Puppet relationships,
-then please stop by https://slack.puppet.com/ or [#puppet](http://webchat.freenode.net/?channels=puppet)
-on Freenode. Someone there will be glad to help you solve your problem. Also refer to
-the [documentation](https://docs.puppet.com/puppet/latest/lang_relationships.html).
-
------------
 
 ### Reasons you might use this:
 
@@ -35,6 +22,65 @@ the [documentation](https://docs.puppet.com/puppet/latest/lang_relationships.htm
 * You need multiple levels of error handling, such as paging on-call support,
   initiating disaster recovery procedures, or failing over to a warm standby.
 * You need the run to fail immediately if any resources fail.
+
+
+### Disadvantages with this model:
+
+* This offers **no consistency guarantee**.
+
+  When the script is done running, you know that each resource it enforced
+  executed successfully in turn, but nothing more. For example, Puppet Script
+  doesn't prevent you from managing a resource multiple times. You can see that
+  in the example script below. As such, there is no single declaration of the
+  complete state of any resource. Instead, it's some more-or-less indeterminate
+  combination of the starting state and each step of the script.
+
+* There is **very little visibility** into changes.
+
+  This means that if you manage a configuration file with a specific setting set
+  there is nothing preventing you from accidentally managing it again with that
+  setting unset. The last resource applied wins and there's no visibility
+  anywhere else that this is happening.
+
+* The relationship model is **sequential only**.
+
+  There are often relationships between different resources. For example, you
+  cannot run a command until the package that contains that command has been
+  installed. Puppet builds those relationships into it's core, making it very
+  easy to ensure that all dependencies are met. In a script though, there's no
+  way to indicate any of these relationships in code. Essentially, there's no
+  way to know whether any of the resources that come afterwards depend on any
+  given resource and there's no way for the system to validate or enforce the
+  dependencies. It's left up to you, and the only way you can actually *test*
+  it is to actually run the script.
+
+* There is **no complete representation** of the resulting configuration.
+
+  A Puppet catalog is a complete representation of the entire configuration you
+  care about. You could take that configuration and apply it on another
+  representative system and come out with the same final result. You could
+  inspect the catalog and know how it would configure a system. You could look
+  at individual classes and resources in your codebase and have an expectation
+  that they represent reality.  That is not the case with a Puppet Script. There
+  are no guardrails preventing you from managing a resource in multiple
+  conflicting ways, and there's no way to read the code and have an expectation
+  of what the result is without holding the *entire codebase* in your head.
+
+
+-----------
+
+To be clear: in almost every situation, you **should not use this tool**. This is
+only for complex processes which are difficult to represent as the final state of
+a state model or one-off ad hoc tasks. This should never be used for ongoing
+configuration management and it should never be used for scripts that are larger
+than you can hold in your head at once.
+
+If you're considering using this because you're struggling with Puppet relationships,
+then please stop by https://slack.puppet.com/ or [#puppet](http://webchat.freenode.net/?channels=puppet)
+on Freenode. Someone there will be glad to help you solve your problem. Also refer to
+the [documentation](https://docs.puppet.com/puppet/latest/lang_relationships.html).
+
+-----------
 
 
 ### Writing a script
