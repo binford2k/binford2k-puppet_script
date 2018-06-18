@@ -11,7 +11,7 @@ Dir.mktmpdir do |dir|
   ['one', 'two', 'three'].each do |name|
     resource(:file, "#{dir}/#{name}",
       :ensure => 'file',
-      :source => "puppet:///myapplication/upgrades/#{name}.sql",
+      :source => "puppet:///modules/myapplication/upgrades/#{name}.sql",
     )
   end
 
